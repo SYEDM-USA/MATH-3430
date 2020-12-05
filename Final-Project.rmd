@@ -1,0 +1,143 @@
+---
+title: "Final Project"
+author: "Muhammed Abubaker Syed, Vy Nguyen, Lanlie Nguyen, Spencer Wolf"
+chunk_output_type: inline
+output: html_document
+---
+
+
+Importing the Indian Premiere League dataset. The dataset contains all the matches ever played in the game starting 2008. 
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+Data <- read.csv(url("https://raw.githubusercontent.com/SYEDM-USA/MATH-3430/main/IPL%20Matches%202008-2020.csv"))
+head(Data,5)
+ncol(Data)
+```
+
+Analysis of the Dataset. 
+Some questions which are always asked when dealing with sports data is performance of each team over the years. 
+Drop columns
+`id`, `city`,`neutral_venue`,`toss_decision`,`eliminator`,`method`
+```{r}
+Final<-select(Data,-c('id','city','neutral_venue','toss_decision','eliminator','method'))
+head(Final,5)
+ncol(Final)
+Final
+```
+
+1. Show the EDA for the top 10 umpire combinations.
+```{r}
+Umpires<-select(Final,c('umpire1','umpire2'))%>%
+  group_by(umpire1,umpire2)%>%
+  summarise(Games_umpired = n())%>%
+  arrange(desc(Games_umpired))%>%
+  head(10)
+Umpires
+```
+2. Who are the top 10 most popular umpires, show a bar plot of the no. of games they umpired
+```{r}
+umpire1_<- select(Final,c('umpire1'))%>%
+  rename('Umpire'='umpire1')
+umpire2_ = select(Final,c('umpire2'))%>%
+  rename('Umpire'='umpire2')
+Umpires_s <- bind_rows(umpire1_,umpire2_)%>%
+  group_by(Umpire)%>%
+  summarise(Games_Umpired = n())%>%
+  arrange(desc(Games_Umpired))%>%
+  head(10)
+Umpires_s
+```
+3. Top 10 teams with the best win rate
+```{r}
+Win_team<- Final%>%
+  rename('Team'='winner')%>%
+  group_by(Team)%>%
+  summarise(wins = n())%>%
+  arrange(desc(wins))%>%
+  drop_na()
+team1_<- select(Final,c('team1'))%>%
+  rename('Team'='team1')
+team2_ = select(Final,c('team2'))%>%
+  rename('Team'='team2')
+Team_s <- bind_rows(team1_,team2_)%>%
+  group_by(Team)%>%
+  summarise(Games_played = n())
+merge(Team_s,Win_team)%>%
+  mutate(Win_rate = Games_played/wins)%>%
+  arrange(desc(Win_rate))
+```
+4. Which stadiums are used most?
+```{r}
+Final%>%
+  group_by(venue)%>%
+  summarise(no_of_games_played = n())%>%
+  arrange(desc(no_of_games_played))
+```
+
+5. Which players have won the most man of the match awards
+```{r}
+Final%>%
+  group_by(player_of_match)%>%
+  summarise(Games_as_Man_of_Match = n())%>%
+  arrange(desc(Games_as_Man_of_Match))
+```
+6. Which team is the gambler?
+```{r}
+Final%>%
+  group_by(toss_winner)%>%
+  summarise(Toss_wins = n())%>%
+  arrange(desc(Toss_wins))%>%
+  rename('Teams'=toss_winner)
+```
+
+7. What game has the highest score difference between teams?
+```{r}
+Final%>%
+  filter(result=="runs")%>%
+  arrange(desc(result_margin))
+```
+
+8. Which teams choose the right option after toss to win the game most number of times?
+```{r}
+Final%>%
+  filter(toss_winner==winner)%>%
+  group_by(winner)%>%
+  summarise(No_of_games_choose_the_right_option=n())%>%
+  arrange(desc(No_of_games_choose_the_right_option))
+```
+
+9. Scatter plor, showing the average of result wicket or runs for each of the 15 teams
+```{r}
+Final%>%
+  select(c('date','winner','result','result_margin'))%>%
+  spread(key= 'result', value = 'result_margin')%>%
+  select(-c('<NA>',tie,'date'))%>%
+  group_by(winner)%>%
+  summarise(avg_runs = mean(runs,na.rm = T),
+            avg_wickets = mean(wickets,na.rm = T))
+```
+
+10. Champions by year
+```{r}
+helper<- Final%>%mutate(date = dmy(date))
+Champions<-Final%>%
+  mutate(Season = year(dmy(date)))%>%
+  group_by(Season)%>%
+  summarise(date = max(dmy(date)))%>%
+  left_join(helper)%>%
+  select(c(Season,winner, player_of_match, venue))
+Champions
+```
+
+Team with most Final wins
+```{r}
+Champions%>%
+  group_by(winner)%>%
+  summarise(No_of_wins = n())%>%
+  arrange(desc(No_of_wins))
+```
+
+#if x team bats secoindand wins, then result is in wickets 
+#if x team bats first  and wins , the rresult is in runs 
