@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(tibble)
+```
+
+## Get the data into the program
+
+```{r}
+data = read.csv(file = 'IPL Matches 2008-2020.csv')
+data
+```
+
+## Heckin Stir up that boi
+
+```{r}
+mangled_data = gather(data, key=Field, value=FieldValue, city, venue, neutral_venue, date) %>%
+  gather(key=TeamNumber, value=Team, team1, team2) %>%
+  unite(umpire_team, umpire1, umpire2, sep="/") %>%
+  rename(t=toss_decision)
+
+mangled_data
+```
+
+## Unstir the boi
+
+```{r}
+fixed_data = spread(mangled_data, key=Field, value=FieldValue) %>%
+  spread(key=TeamNumber, value=Team) %>%
+  separate(umpire_team, c("umpire1", "umprire2"), sep="/") %>%
+  rename(toss_decision = t)
+
+fixed_data
+```
+
+```{r}
+```
+
+## Put that boi in a good ol csv file
+
+```{r}
+write.csv(mangled_data, "cricket_data.csv")
+```
