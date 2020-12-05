@@ -5,18 +5,44 @@ chunk_output_type: inline
 output: html_document
 ---
 
-
-Importing the Indian Premiere League dataset. The dataset contains all the matches ever played in the game starting 2008. 
 ```{r}
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
-Data <- read.csv(url("https://raw.githubusercontent.com/SYEDM-USA/MATH-3430/main/IPL%20Matches%202008-2020.csv"))
+library(dplyr)
+library(tibble)
+```
+
+## Importing the Indian Premiere League dataset. The dataset contains all the matches ever played in the game starting 2008. 
+
+```{r}
+data <- read.csv(url("https://raw.githubusercontent.com/SYEDM-USA/MATH-3430/main/IPL%20Matches%202008-2020.csv"))
+data
+```
+
+## Untidy -ing the tidy dataset
+
+```{r}
+mangled_data = gather(data, key=Field, value=FieldValue, city, venue, neutral_venue, date) %>%
+  gather(key=TeamNumber, value=Team, team1, team2) %>%
+  unite(umpire_team, umpire1, umpire2, sep="/") %>%
+  rename(t=toss_decision)
+mangled_data
+```
+
+## Tidying the dataset
+
+```{r}
+Data = spread(mangled_data, key=Field, value=FieldValue) %>%
+  spread(key=TeamNumber, value=Team) %>%
+  separate(umpire_team, c("umpire1", "umpire2"), sep="/") %>%
+  rename(toss_decision = t)
 head(Data,5)
 ncol(Data)
 ```
 
-Analysis of the Dataset. 
+
+## Analysis of the Dataset. 
 Some questions which are always asked when dealing with sports data is performance of each team over the years. 
 Drop columns
 `id`, `city`,`neutral_venue`,`toss_decision`,`eliminator`,`method`
@@ -116,7 +142,12 @@ Final%>%
   select(-c('<NA>',tie,'date'))%>%
   group_by(winner)%>%
   summarise(avg_runs = mean(runs,na.rm = T),
-            avg_wickets = mean(wickets,na.rm = T))
+            avg_wickets = mean(wickets,na.rm = T))%>%
+  gather(c(avg_runs,avg_wickets),key = type, value=avg)%>%
+  drop_na()%>%
+  ggplot(aes(winner,avg,fill=type))+
+  geom_bar(stat="identity",position = "dodge")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 10. Champions by year
