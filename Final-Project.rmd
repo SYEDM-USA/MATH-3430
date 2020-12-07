@@ -17,7 +17,7 @@ library(tibble)
 
 ```{r}
 data <- read.csv(url("https://raw.githubusercontent.com/SYEDM-USA/MATH-3430/main/IPL%20Matches%202008-2020.csv"))
-data
+head(data,10)
 ```
 
 ## Untidy -ing the tidy dataset
@@ -27,7 +27,7 @@ mangled_data = gather(data, key=Field, value=FieldValue, city, venue, neutral_ve
   gather(key=TeamNumber, value=Team, team1, team2) %>%
   unite(umpire_team, umpire1, umpire2, sep="/") %>%
   rename(t=toss_decision)
-mangled_data
+head(mangled_data,10)
 ```
 
 ## Tidying the dataset
@@ -37,7 +37,7 @@ Data = spread(mangled_data, key=Field, value=FieldValue) %>%
   spread(key=TeamNumber, value=Team) %>%
   separate(umpire_team, c("umpire1", "umpire2"), sep="/") %>%
   rename(toss_decision = t)
-head(Data,5)
+head(Data,10)
 ncol(Data)
 ```
 
@@ -48,12 +48,11 @@ Drop columns
 `id`, `city`,`neutral_venue`,`toss_decision`,`eliminator`,`method`
 ```{r}
 Final<-select(Data,-c('id','city','neutral_venue','toss_decision','eliminator','method'))
-head(Final,5)
+head(Final,10)
 ncol(Final)
-Final
 ```
 
-1. Show the EDA for the top 10 umpire combinations.
+1. Show the most popular umpire combinations.
 ```{r}
 Umpires<-select(Final,c('umpire1','umpire2'))%>%
   group_by(umpire1,umpire2)%>%
@@ -74,8 +73,12 @@ Umpires_s <- bind_rows(umpire1_,umpire2_)%>%
   arrange(desc(Games_Umpired))%>%
   head(10)
 Umpires_s
+Umpires_s%>%
+  ggplot(aes(x=Umpire, y = Games_Umpired))+
+  geom_bar(stat = "identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
-3. Top 10 teams with the best win rate
+3. Win percentage for all teams
 ```{r}
 Win_team<- Final%>%
   rename('Team'='winner')%>%
@@ -91,7 +94,7 @@ Team_s <- bind_rows(team1_,team2_)%>%
   group_by(Team)%>%
   summarise(Games_played = n())
 merge(Team_s,Win_team)%>%
-  mutate(Win_rate = Games_played/wins)%>%
+  mutate(Win_rate = (wins*100)/Games_played)%>%
   arrange(desc(Win_rate))
 ```
 4. Which stadiums are used most?
@@ -99,7 +102,8 @@ merge(Team_s,Win_team)%>%
 Final%>%
   group_by(venue)%>%
   summarise(no_of_games_played = n())%>%
-  arrange(desc(no_of_games_played))
+  arrange(desc(no_of_games_played))%>%
+  head(10)
 ```
 
 5. Which players have won the most man of the match awards
@@ -107,7 +111,8 @@ Final%>%
 Final%>%
   group_by(player_of_match)%>%
   summarise(Games_as_Man_of_Match = n())%>%
-  arrange(desc(Games_as_Man_of_Match))
+  arrange(desc(Games_as_Man_of_Match))%>%
+  head(10)
 ```
 6. Which team is the gambler?
 ```{r}
@@ -122,7 +127,8 @@ Final%>%
 ```{r}
 Final%>%
   filter(result=="runs")%>%
-  arrange(desc(result_margin))
+  arrange(desc(result_margin))%>%
+  head(10)
 ```
 
 8. Which teams choose the right option after toss to win the game most number of times?
@@ -134,7 +140,7 @@ Final%>%
   arrange(desc(No_of_games_choose_the_right_option))
 ```
 
-9. Scatter plor, showing the average of result wicket or runs for each of the 15 teams
+9. Bar plot, showing the average of result wicket or runs for each of the 15 teams
 ```{r}
 Final%>%
   select(c('date','winner','result','result_margin'))%>%
@@ -162,7 +168,7 @@ Champions<-Final%>%
 Champions
 ```
 
-Team with most Final wins
+11. Team with most Final wins
 ```{r}
 Champions%>%
   group_by(winner)%>%
