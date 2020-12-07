@@ -9,14 +9,14 @@ library(dplyr)
 library(tibble)
 ```
 
-## Get the data into the program
+## Load up the existing data
 
 ```{r}
 data = read.csv(file = 'IPL Matches 2008-2020.csv')
 data
 ```
 
-## Heckin Stir up that boi
+## Untidy the data
 
 ```{r}
 mangled_data = gather(data, key=Field, value=FieldValue, city, venue, neutral_venue, date) %>%
@@ -27,7 +27,7 @@ mangled_data = gather(data, key=Field, value=FieldValue, city, venue, neutral_ve
 mangled_data
 ```
 
-## Unstir the boi
+## Tidy the data
 
 ```{r}
 fixed_data = spread(mangled_data, key=Field, value=FieldValue) %>%
@@ -38,10 +38,9 @@ fixed_data = spread(mangled_data, key=Field, value=FieldValue) %>%
 fixed_data
 ```
 
-```{r}
-```
+## Write data to cricket_data.csv
 
-## Put that boi in a good ol csv file
+The data inside is identical to the original data except for column order.
 
 ```{r}
 write.csv(mangled_data, "cricket_data.csv")
